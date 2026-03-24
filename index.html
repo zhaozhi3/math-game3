@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>代數全平衡實驗室 27.0 🍬</title>
+    <style>
+        :root { --pink: #ff5c8d; --blue: #4f46e5; --orange: #f59e0b; --purple: #9333ea; }
+        body { font-family: "PingFang TC", sans-serif; background: #fff5f8; margin: 0; overflow: hidden; display: flex; height: 100vh; }
+        
+        #sidebar { width: 180px; background: #ffebf2; border-right: 3px solid #ffc2d4; display: flex; flex-direction: column; padding: 20px 10px; z-index: 100; }
+        .lvl-btn { background: white; border: 2px solid #ffc2d4; border-radius: 12px; padding: 12px; margin-bottom: 12px; cursor: pointer; text-align: center; font-size: 14px; }
+        .lvl-btn.active { background: var(--pink); color: white; border-color: var(--pink); }
+
+        #main { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+        #header-task { width: 85%; background: white; border: 3px solid #ffc2d4; border-radius: 15px; margin-top: 15px; padding: 12px; text-align: center; font-size: 26px; font-weight: bold; color: #555; }
+        
+        #stage { position: relative; width: 95%; max-width: 950px; height: 480px; background: white; border: 4px solid #ffc2d4; border-radius: 30px; margin-top: 15px; }
+        #line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; border-left: 2px dashed #ffc2d4; }
+        #equal-sign { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: white; border: 4px solid var(--pink); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: bold; color: var(--pink); z-index: 5; }
+
+        .zero-bg { position: absolute; top: 50%; transform: translateY(-50%); font-size: 160px; font-weight: bold; color: #f0f0f0; z-index: 1; opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
+        .zero-bg.active { opacity: 1; transform: translateY(-50%) scale(1.1); } /* 0 出現時的縮放效果 */
+        #zero-L { left: 20%; } #zero-R { right: 20%; }
+
+        .block { position: absolute; width: 95px; height: 95px; border-radius: 20px; color: white; font-weight: bold; font-size: 26px; cursor: grab; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 0px rgba(0,0,0,0.1); z-index: 10; transition: filter 0.2s; }
+        .x-block { background: var(--blue); }
+        .n-block { background: var(--orange); }
+
+        .paren-container { position: absolute; width: 420px; height: 160px; border: 3px dashed var(--purple); border-radius: 30px; background: rgba(147, 51, 234, 0.03); }
+        .launcher { position: absolute; left: 15px; top: 35px; width: 85px; height: 85px; background: white; border: 4px solid var(--purple); border-radius: 20px; color: var(--purple); font-size: 36px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: 0.3s; }
+        .launcher.gone { opacity: 0; transform: scale(0); pointer-events: none; }
+
+        .flying-item { position: fixed; width: 60px; height: 60px; background: white; border: 4px solid var(--blue); border-radius: 50%; color: var(--blue); font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 2000; font-size: 28px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); pointer-events: none; }
+        
+        .frac-v { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 10px; }
+        .frac-v-line { width: 100%; height: 3px; background: currentColor; margin: 2px 0; }
+        
+        #final-ans-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; align-items: center; font-size: 56px; font-weight: bold; color: var(--pink); background: white; padding: 10px 45px; border-radius: 25px; border: 5px solid var(--pink); z-index: 100; box-shadow: 0 15px 40px rgba(255,92,141,0.25); }
+
+        #msg { font-size: 20px; font-weight: bold; color: var(--pink); margin: 10px 0; height: 30px; }
+        .clickable-coeff { background: #fff !important; color: var(--blue) !important; padding: 4px 12px; border-radius: 12px; cursor: pointer; border: 2px solid var(--blue); box-shadow: 0 4px 0 var(--blue); }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="lvl-btn" onclick="loadLevel(0)">題型 1：8x - 32 = 4x</div>
+        <div class="lvl-btn" onclick="loadLevel(1)">題型 2：7x + 8 = -6x</div>
+        <div class="lvl-btn" onclick="loadLevel(2)">題型 3：3x - 15 = -2x</div>
+        <div class="lvl-btn" onclick="loadLevel(3)">題型 4：2(x + 3) = 6x</div>
+    </div>
+
+    <div id="main">
+        <div id="header-task">方程式</div>
+        <div id="msg">開始解題！</div>
+        <div id="stage">
+            <div id="line"></div>
+            <div id="equal-sign">=</div>
+            <div id="zero-L" class="zero-bg">0</div>
+            <div id="zero-R" class="zero-bg">0</div>
+            <div id="final-ans-box"></div>
+        </div>
+        <button onclick="resetLevel()" style="margin-top:20px; padding:10px 25px; border-radius:25px; border:2px solid var(--pink); background:none; color:var(--pink); font-weight:bold; cursor:pointer;">重設本題 ↺</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
+    <script>
+        const levels = [
+            { t: "8x - 32 = 4x", b: [{v:8, ty:'x', x:50, y:180}, {v:-32, ty:'n', x:160, y:180}, {v:4, ty:'x', x:550, y:180}] },
+            { t: "7x + 8 = -6x", b: [{v:7, ty:'x', x:50, y:180}, {v:8, ty:'n', x:160, y:180}, {v:-6, ty:'x', x:550, y:180}] },
+            { t: "3x - 15 = -2x", b: [{v:3, ty:'x', x:50, y:180}, {v:-15, ty:'n', x:160, y:180}, {v:-2, ty:'x', x:550, y:180}] },
+            { t: "2(x + 3) = 6x", isDist: true, m: 2, inner: [{v:1, ty:'x', x:150, y:30}, {v:3, ty:'n', x:280, y:30}], target: {v:6, ty:'x', x:600, y:180} }
+        ];
+
+        let curIdx = 0, lock = false;
+
+        // 最大公因數運算 (用於約分)
+        function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
+
+        function loadLevel(idx) {
+            curIdx = idx; lock = false;
+            $(".lvl-btn").removeClass("active").eq(idx).addClass("active");
+            $("#header-task").text("題目：" + levels[idx].t);
+            $("#final-ans-box").hide().empty();
+            $(".block, .paren-container").remove();
+            const lvl = levels[idx];
+            if(lvl.isDist) {
+                let $cont = $(`<div class="paren-container" id="p-wrap">
+                    <div class="launcher" id="l-btn" onclick="launchDist(${lvl.m})">${lvl.m}</div>
+                    <span style="position:absolute;left:115px;top:10px;font-size:110px;color:var(--purple);font-weight:200">(</span>
+                    <span style="position:absolute;right:15px;top:10px;font-size:110px;color:var(--purple);font-weight:200">)</span>
+                </div>`).css({left: 30, top: 160});
+                $("#stage").append($cont);
+                lvl.inner.forEach((o, i) => {
+                    let $ib = $(`<div class="block ${o.ty}-block" id="target-${i}">${o.v==1?'x':'+'+o.v}</div>`);
+                    $ib.css({left: o.x, top: o.y}).data({v: o.v, t: o.ty, s: 'L'});
+                    $cont.append($ib);
+                });
+                addBlk(lvl.target.v, lvl.target.ty, lvl.target.x, lvl.target.y, 'R');
+            } else {
+                lvl.b.forEach(o => addBlk(o.v, o.ty, o.x, o.y, o.x < 475 ? 'L' : 'R'));
+            }
+            refresh();
+        }
+
+        function addBlk(v, t, x, y, s) {
+            let $d = $(`<div class="block ${t}-block"></div>`).css({left: x, top: y}).data({v, t, s});
+            $("#stage").append($d);
+            $d.draggable({
+                containment: "#stage",
+                drag: function() {
+                    let side = ($(this).position().left + 47) < 475 ? 'L' : 'R';
+                    if($(this).data('s') !== side) { $(this).data({v: -$(this).data('v'), s: side}); refresh(); }
+                },
+                stop: function() { checkMerge($(this)); refresh(); setTimeout(checkWin, 150); }
+            });
+        }
+
+        function launchDist(m) {
+            if(lock) return; lock = true;
+            $("#l-btn").addClass("gone");
+            let count = 0;
+            const startPos = $("#l-btn").offset();
+            [0, 1].forEach(i => {
+                let $t = $("#target-" + i);
+                let $ball = $(`<div class="flying-item" style="border-color:var(--purple); color:var(--purple);">${m}</div>`).css({left: startPos.left, top: startPos.top});
+                $("body").append($ball);
+                $ball.animate({ left: $t.offset().left, top: $t.offset().top }, {
+                    duration: 800,
+                    step: function(now, fx) { if (fx.prop === "top") $(this).css("top", startPos.top - Math.sin(fx.pos * Math.PI) * 120); },
+                    complete: function() {
+                        $(this).remove();
+                        let v = $t.data('v') * m;
+                        $t.text((v > 0 && i > 0 ? "+" : "") + v + ($t.data('t')==='x'?'x':'')).data('v', v);
+                        if(++count === 2) {
+                            setTimeout(() => {
+                                const pPos = $("#p-wrap").position();
+                                addBlk($("#target-0").data('v'), 'x', pPos.left + 150, pPos.top + 30, 'L');
+                                addBlk($("#target-1").data('v'), 'n', pPos.left + 280, pPos.top + 30, 'L');
+                                $("#p-wrap").remove(); lock = false; refresh(); checkWin();
+                            }, 500);
+                        }
+                    }
+                });
+            });
+        }
+
+        function refresh() {
+            ['L', 'R'].forEach(s => {
+                let bs = $(".block:visible").not("[id*='target']").filter(function(){ return $(this).data('s') === s });
+                bs.sort((a,b) => $(a).position().left - $(b).position().left);
+                bs.each(function(i){
+                    let v = $(this).data('v'), t = $(this).data('t');
+                    let p = (v > 0 && i > 0) ? "+" : "";
+                    $(this).text(p + (t==='x' ? (v===1?"x":v===-1?"-x":v+"x") : v));
+                });
+                const $z = $(`#zero-${s}`);
+                if(bs.length === 0 && !$("#p-wrap").length) $z.addClass("active");
+                else $z.removeClass("active");
+            });
+        }
+
+        function checkMerge($el) {
+            $(".block:visible").not("[id*='target']").each(function(){
+                if(this === $el[0]) return;
+                if($el.data('t')==$(this).data('t') && $el.data('s')==$(this).data('s') && isOver($el, $(this))) {
+                    let sum = $el.data('v') + $(this).data('v');
+                    if(sum===0){ $el.remove(); $(this).remove(); }
+                    else { $(this).data('v', sum); $el.remove(); }
+                    refresh();
+                }
+            });
+        }
+
+        function isOver($a, $b) {
+            let r1 = $a[0].getBoundingClientRect(), r2 = $b[0].getBoundingClientRect();
+            return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+        }
+
+        function checkWin() {
+            if(lock) return;
+            let blks = $(".block:visible").not("[id*='target']");
+            let xB = blks.filter(function(){ return $(this).data('t')==='x' });
+            let nB = blks.filter(function(){ return $(this).data('t')==='n' });
+
+            if(xB.length === 1 && nB.length === 1 && xB.data('s') !== nB.data('s')) {
+                let c = xB.data('v'), n = nB.data('v');
+                if(c !== 1) {
+                    xB.html(`<span class="clickable-coeff" onclick="event.stopPropagation(); driftDown(${c},${n})">${c}</span>x`);
+                } else {
+                    renderFinalResult(n, 1);
+                }
+            }
+        }
+
+        function driftDown(c, n) {
+            if(lock) return; lock = true;
+            const $nb = $(".n-block"), $xb = $(".x-block");
+            const startPos = $(".clickable-coeff").offset();
+            const targetPos = $nb.offset();
+
+            let $f = $(`<div class="flying-item">${c}</div>`).css({left: startPos.left, top: startPos.top});
+            $("body").append($f);
+            $xb.text("x");
+
+            $f.animate({ left: targetPos.left + 15, top: targetPos.top + 75 }, 1200, "easeInOutQuart", function(){
+                $(this).remove();
+                // 方塊內維持顯示原始分數型態
+                $nb.html(`<div class="frac-v"><span>${n}</span><div class="frac-v-line"></div><span style="color:#ffed00">${c}</span></div>`);
+                renderFinalResult(n, c);
+                lock = false;
+            });
+        }
+
+        function renderFinalResult(n, c) {
+            const $box = $("#final-ans-box");
+            let finalN = n, finalC = c;
+            
+            // 處理負號：將負號統一放在分子
+            if (finalC < 0) { finalN = -finalN; finalC = -finalC; }
+            
+            // 約分邏輯
+            const common = gcd(finalN, finalC);
+            finalN /= common;
+            finalC /= common;
+
+            if (finalC === 1) {
+                $box.html(`x = ${finalN}`);
+            } else {
+                $box.html(`x = <div class="frac-v"><span>${finalN}</span><div class="frac-v-line"></div><span>${finalC}</span></div>`);
+            }
+            $box.fadeIn(600);
+            $("#msg").text("解題成功！");
+        }
+
+        function resetLevel() { loadLevel(curIdx); }
+        $(window).on('load', () => loadLevel(0));
+    </script>
+</body>
+</html>
