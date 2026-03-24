@@ -3,74 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>代數全平衡  🖥️📱</title>
+    <title>代數全平衡 31.0 比例優化版 📱🖥️</title>
     <style>
-        :root { --pink: #ff5c8d; --blue: #4f46e5; --orange: #f59e0b; --purple: #9333ea; }
+        :root { 
+            --pink: #ff5c8d; --blue: #4f46e5; --orange: #f59e0b; --purple: #9333ea; 
+            --line-y: 300px; 
+            /* 方塊大小隨螢幕寬度自動縮放：手機約 65px，電腦約 85px */
+            --blk-sz: clamp(65px, 12vw, 85px); 
+        }
         * { touch-action: none; box-sizing: border-box; -webkit-user-select: none; }
         body { font-family: "PingFang TC", sans-serif; background: #fff5f8; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        /* 響應式佈局：預設電腦版 (左側選單) */
-        #sidebar { 
-            width: 200px; background: #ffebf2; border-right: 3px solid #ffc2d4; 
-            display: flex; flex-direction: column; padding: 15px; z-index: 100;
-        }
-        #main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px; position: relative; }
+        /* 響應式佈局：手機版選單置頂 */
+        #sidebar { width: 180px; background: #ffebf2; border-right: 3px solid #ffc2d4; display: flex; flex-direction: column; padding: 15px; z-index: 100; }
+        #main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; position: relative; }
         
-        /* 手機版自動切換 (頂部選單) */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #sidebar { width: 100%; height: auto; flex-direction: row; border-right: none; border-bottom: 3px solid #ffc2d4; overflow-x: auto; padding: 10px; }
-            .lvl-btn { margin-bottom: 0 !important; margin-right: 10px; font-size: 14px; padding: 8px 15px; }
-            #main { padding: 10px; }
+            #sidebar { width: 100%; flex-direction: row; border-right: none; border-bottom: 3px solid #ffc2d4; overflow-x: auto; padding: 8px; }
+            .lvl-btn { margin-bottom: 0 !important; margin-right: 8px; font-size: 13px; padding: 8px 12px; }
+            #header-task { font-size: 20px !important; }
+            :root { --line-y: 260px; } /* 手機版軌道稍微往上一點點 */
         }
 
-        .lvl-btn { 
-            background: white; border: 2px solid #ffc2d4; border-radius: 12px; 
-            padding: 12px; margin-bottom: 12px; cursor: pointer; text-align: center; 
-            white-space: nowrap; transition: 0.2s;
-        }
-        .lvl-btn.active { background: var(--pink); color: white; border-color: var(--pink); }
+        .lvl-btn { background: white; border: 2px solid #ffc2d4; border-radius: 12px; padding: 10px; margin-bottom: 10px; cursor: pointer; text-align: center; white-space: nowrap; }
+        .lvl-btn.active { background: var(--pink); color: white; }
 
-        #header-task { width: 90%; background: white; border: 3px solid #ffc2d4; border-radius: 15px; padding: 12px; text-align: center; font-size: 24px; font-weight: bold; color: #555; }
+        #header-task { width: 95%; background: white; border: 3px solid #ffc2d4; border-radius: 15px; padding: 10px; text-align: center; font-size: 24px; font-weight: bold; color: #555; }
+        
         #stage { 
-            position: relative; width: 100%; max-width: 900px; flex-grow: 1; 
+            position: relative; width: 100%; max-width: 1000px; flex-grow: 1; 
             background: white; border: 4px solid #ffc2d4; border-radius: 30px; 
-            margin: 15px 0; overflow: hidden; box-shadow: inset 0 0 20px rgba(255,194,212,0.2);
+            margin: 10px 0; overflow: hidden;
         }
         #line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; border-left: 2px dashed #ffc2d4; }
         #equal-sign { 
-            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
-            width: 60px; height: 60px; background: white; border: 4px solid var(--pink); 
+            position: absolute; left: 50%; top: var(--line-y); transform: translate(-50%, -15%); 
+            width: 55px; height: 55px; background: white; border: 4px solid var(--pink); 
             border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 32px; font-weight: bold; color: var(--pink); z-index: 5; 
+            font-size: 30px; font-weight: bold; color: var(--pink); z-index: 5; 
         }
 
-        .zero-bg { position: absolute; top: 50%; transform: translateY(-50%); font-size: clamp(100px, 20vw, 180px); font-weight: bold; color: #f8f8f8; z-index: 1; opacity: 0; transition: 0.4s; pointer-events: none; }
-        #zero-L { left: 15%; } #zero-R { right: 15%; }
+        .zero-bg { position: absolute; top: var(--line-y); transform: translateY(-15%); font-size: 120px; font-weight: bold; color: #f9f9f9; z-index: 1; opacity: 0; transition: 0.3s; pointer-events: none; }
+        #zero-L { left: 18%; } #zero-R { right: 18%; }
         .zero-bg.active { opacity: 1; }
 
         .block { 
-            position: absolute; width: 85px; height: 85px; border-radius: 20px; 
-            color: white; font-weight: bold; font-size: 24px; cursor: grab; 
+            position: absolute; width: var(--blk-sz); height: var(--blk-sz); border-radius: 18px; 
+            color: white; font-weight: bold; font-size: calc(var(--blk-sz) * 0.3); cursor: grab; 
             display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 5px 0px rgba(0,0,0,0.1); z-index: 10; 
+            box-shadow: 0 5px 0px rgba(0,0,0,0.1); z-index: 10;
+            top: var(--line-y);
         }
-        .block:active { cursor: grabbing; transform: scale(1.05); }
         .x-block { background: var(--blue); }
         .n-block { background: var(--orange); }
 
-        .paren-container { position: absolute; width: 380px; height: 150px; border: 3px dashed var(--purple); border-radius: 30px; background: rgba(147, 51, 234, 0.03); }
-        .launcher { position: absolute; left: 15px; top: 30px; width: 80px; height: 80px; background: white; border: 4px solid var(--purple); border-radius: 20px; color: var(--purple); font-size: 32px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; z-index: 20; }
-        .launcher.gone { opacity: 0; transform: scale(0); pointer-events: none; }
+        .paren-container { 
+            position: absolute; width: calc(var(--blk-sz) * 4.5); height: calc(var(--blk-sz) * 1.5); 
+            border: 3px dashed var(--purple); border-radius: 25px; 
+            background: rgba(147, 51, 234, 0.03); top: calc(var(--line-y) - (var(--blk-sz) * 0.25)); 
+        }
+        .launcher { 
+            position: absolute; left: 10px; top: 15px; 
+            width: calc(var(--blk-sz) * 0.9); height: calc(var(--blk-sz) * 0.9); 
+            background: white; border: 3px solid var(--purple); border-radius: 15px; 
+            color: var(--purple); font-size: calc(var(--blk-sz) * 0.4); font-weight: bold; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; 
+        }
+        .launcher.gone { opacity: 0; transform: scale(0); }
 
-        .flying-item { position: fixed; width: 55px; height: 55px; background: white; border: 4px solid var(--blue); border-radius: 50%; color: var(--blue); font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 2000; font-size: 26px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); pointer-events: none; }
+        .flying-item { position: fixed; width: 50px; height: 50px; background: white; border: 3px solid var(--blue); border-radius: 50%; color: var(--blue); font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 2000; font-size: 22px; pointer-events: none; }
         
         .frac-v { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; }
-        .frac-v-line { width: 100%; height: 3px; background: currentColor; margin: 2px 0; }
+        .frac-v-line { width: 100%; height: 2px; background: currentColor; margin: 2px 0; }
         
-        #final-ans-box { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; align-items: center; font-size: 48px; font-weight: bold; color: var(--pink); background: white; padding: 10px 40px; border-radius: 20px; border: 5px solid var(--pink); z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        #msg { font-size: 18px; font-weight: bold; color: var(--pink); margin: 5px 0; min-height: 25px; }
-        .clickable-coeff { background: #fff !important; color: var(--blue) !important; padding: 2px 10px; border-radius: 10px; border: 2px solid var(--blue); cursor: pointer; }
+        #final-ans-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; align-items: center; font-size: 36px; font-weight: bold; color: var(--pink); background: white; padding: 10px 30px; border-radius: 20px; border: 5px solid var(--pink); z-index: 100; box-shadow: 0 8px 25px rgba(255,92,141,0.2); }
+        #reset-btn { margin-bottom: 5px; padding: 8px 20px; border-radius: 20px; border: 2px solid var(--pink); background: white; color: var(--pink); font-weight: bold; cursor: pointer; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -84,7 +92,6 @@
 
     <div id="main">
         <div id="header-task">方程式</div>
-        <div id="msg">載入中...</div>
         <div id="stage">
             <div id="line"></div>
             <div id="equal-sign">=</div>
@@ -92,7 +99,7 @@
             <div id="zero-R" class="zero-bg">0</div>
             <div id="final-ans-box"></div>
         </div>
-        <button onclick="resetLevel()" style="margin-bottom:10px; padding:10px 25px; border-radius:25px; border:2px solid var(--pink); background:white; color:var(--pink); font-weight:bold; cursor:pointer;">重設本題 ↺</button>
+        <button id="reset-btn" onclick="resetLevel()">重設本題 ↺</button>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -101,10 +108,10 @@
 
     <script>
         const levels = [
-            { t: "8x - 32 = 4x", b: [{v:8, ty:'x', x:60, y:150}, {v:-32, ty:'n', x:160, y:150}, {v:4, ty:'x', x:550, y:150}] },
-            { t: "7x + 8 = -6x", b: [{v:7, ty:'x', x:60, y:150}, {v:8, ty:'n', x:160, y:150}, {v:-6, ty:'x', x:550, y:150}] },
-            { t: "3x - 15 = -2x", b: [{v:3, ty:'x', x:60, y:150}, {v:-15, ty:'n', x:160, y:150}, {v:-2, ty:'x', x:550, y:150}] },
-            { t: "2(x + 3) = 6x", isDist: true, m: 2, inner: [{v:1, ty:'x', x:140, y:35}, {v:3, ty:'n', x:240, y:35}], target: {v:6, ty:'x', x:550, y:150} }
+            { t: "8x - 32 = 4x", b: [{v:8, ty:'x', x:0.1}, {v:-32, ty:'n', x:0.25}, {v:4, ty:'x', x:0.75}] },
+            { t: "7x + 8 = -6x", b: [{v:7, ty:'x', x:0.1}, {v:8, ty:'n', x:0.25}, {v:-6, ty:'x', x:0.75}] },
+            { t: "3x - 15 = -2x", b: [{v:3, ty:'x', x:0.1}, {v:-15, ty:'n', x:0.25}, {v:-2, ty:'x', x:0.75}] },
+            { t: "2(x + 3) = 6x", isDist: true, m: 2, inner: [{v:1, ty:'x', x:0.3}, {v:3, ty:'n', x:0.6}], target: {v:6, ty:'x', x:0.75} }
         ];
 
         let curIdx = 0, lock = false;
@@ -113,9 +120,9 @@
 
         function loadLevel(idx) {
             curIdx = idx; lock = false;
+            const stageW = $("#stage").width();
             $(".lvl-btn").removeClass("active").eq(idx).addClass("active");
-            $("#header-task").text("題目：" + levels[idx].t);
-            $("#msg").text("開始搬動方塊！");
+            $("#header-task").text(levels[idx].t);
             $("#final-ans-box").hide().empty();
             $(".block, .paren-container").remove();
             
@@ -123,69 +130,54 @@
             if(lvl.isDist) {
                 let $cont = $(`<div class="paren-container" id="p-wrap">
                     <div class="launcher" id="l-btn" onclick="launchDist(${lvl.m})">${lvl.m}</div>
-                    <span style="position:absolute;left:105px;top:10px;font-size:100px;color:var(--purple);font-weight:200">(</span>
-                    <span style="position:absolute;right:15px;top:10px;font-size:100px;color:var(--purple);font-weight:200">)</span>
-                </div>`).css({left: 30, top: 120});
+                    <span style="position:absolute;left:25%;top:5px;font-size:70px;color:var(--purple);font-weight:200">(</span>
+                    <span style="position:absolute;right:5%;top:5px;font-size:70px;color:var(--purple);font-weight:200">)</span>
+                </div>`).css({left: stageW * 0.05});
                 $("#stage").append($cont);
+                const contW = $cont.width();
                 lvl.inner.forEach((o, i) => {
                     let $ib = $(`<div class="block ${o.ty}-block" id="target-${i}">${o.v==1?'x':'+'+o.v}</div>`);
-                    $ib.css({left: o.x, top: o.y, width:75, height:75}).data({v: o.v, t: o.ty, s: 'L'});
+                    $ib.css({left: contW * o.x, top: 15, width: 'calc(var(--blk-sz)*0.8)', height: 'calc(var(--blk-sz)*0.8)'}).data({v: o.v, t: o.ty, s: 'L'});
                     $cont.append($ib);
                 });
-                addBlk(lvl.target.v, lvl.target.ty, 600, 150, 'R');
+                addBlk(lvl.target.v, lvl.target.ty, stageW * lvl.target.x, 'R');
             } else {
-                lvl.b.forEach(o => addBlk(o.v, o.ty, o.x, o.y, o.x < 450 ? 'L' : 'R'));
+                lvl.b.forEach(o => addBlk(o.v, o.ty, stageW * o.x, o.x < 0.5 ? 'L' : 'R'));
             }
-            refresh();
+            refreshAll();
         }
 
-        function addBlk(v, t, x, y, s) {
-            let $d = $(`<div class="block ${t}-block"></div>`).css({left: x, top: y}).data({v, t, s});
+        function addBlk(v, t, x, s) {
+            let $d = $(`<div class="block ${t}-block"></div>`).css({left: x}).data({v, t, s});
             $("#stage").append($d);
             $d.draggable({
+                axis: "x",
                 containment: "#stage",
                 drag: function() {
                     const mid = $("#stage").width() / 2;
-                    let side = ($(this).position().left + 42) < mid ? 'L' : 'R';
-                    if($(this).data('s') !== side) { $(this).data({v: -$(this).data('v'), s: side}); refresh(); }
-                },
-                stop: function() { checkMerge($(this)); refresh(); setTimeout(checkWin, 150); }
-            });
-        }
-
-        function launchDist(m) {
-            if(lock) return; lock = true;
-            $("#l-btn").addClass("gone");
-            let count = 0;
-            const startPos = $("#l-btn").offset();
-            [0, 1].forEach(i => {
-                let $t = $("#target-" + i);
-                let $ball = $(`<div class="flying-item" style="border-color:var(--purple); color:var(--purple);">${m}</div>`).css({left: startPos.left, top: startPos.top});
-                $("body").append($ball);
-                $ball.animate({ left: $t.offset().left, top: $t.offset().top }, 800, function() {
-                    $(this).remove();
-                    let v = $t.data('v') * m;
-                    $t.text((v > 0 && i > 0 ? "+" : "") + v + ($t.data('t')==='x'?'x':'')).data('v', v);
-                    if(++count === 2) {
-                        setTimeout(() => {
-                            const pPos = $("#p-wrap").position();
-                            addBlk($("#target-0").data('v'), 'x', pPos.left + 120, pPos.top + 35, 'L');
-                            addBlk($("#target-1").data('v'), 'n', pPos.left + 230, pPos.top + 35, 'L');
-                            $("#p-wrap").remove(); lock = false; refresh(); checkWin();
-                        }, 500);
+                    let side = ($(this).position().left + ($(".block").width()/2)) < mid ? 'L' : 'R';
+                    if($(this).data('s') !== side) { 
+                        $(this).data({v: -$(this).data('v'), s: side}); 
                     }
-                });
+                    refreshAll();
+                },
+                stop: function() { 
+                    checkMerge($(this)); 
+                    refreshAll();
+                    setTimeout(checkWin, 200); 
+                }
             });
         }
 
-        function refresh() {
-            const mid = $("#stage").width() / 2;
+        function refreshAll() {
             ['L', 'R'].forEach(s => {
                 let bs = $(".block:visible").not("[id*='target']").filter(function(){ return $(this).data('s') === s });
+                bs.sort((a,b) => $(a).position().left - $(b).position().left);
                 bs.each(function(i){
                     let v = $(this).data('v'), t = $(this).data('t');
                     let p = (v > 0 && i > 0) ? "+" : "";
-                    $(this).text(p + (t==='x' ? (v===1?"x":v===-1?"-x":v+"x") : v));
+                    let txt = (t === 'x') ? (v === 1 ? "x" : v === -1 ? "-x" : v + "x") : v;
+                    $(this).text(p + txt);
                 });
                 $(`#zero-${s}`).toggleClass("active", (bs.length === 0 && !$("#p-wrap").length));
             });
@@ -198,24 +190,47 @@
                     let sum = $el.data('v') + $(this).data('v');
                     if(sum===0){ $el.remove(); $(this).remove(); }
                     else { $(this).data('v', sum); $el.remove(); }
-                    refresh();
                 }
             });
         }
 
         function isOver($a, $b) {
-            let r1 = $a[0].getBoundingClientRect(), r2 = $b[0].getBoundingClientRect();
-            return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+            let r1 = $a.position(), r2 = $b.position();
+            return Math.abs(r1.left - r2.left) < ($(".block").width() * 0.7);
+        }
+
+        function launchDist(m) {
+            if(lock) return; lock = true;
+            $("#l-btn").addClass("gone");
+            let count = 0;
+            [0, 1].forEach(i => {
+                let $t = $("#target-" + i);
+                let $ball = $(`<div class="flying-item">${m}</div>`).css({left: $("#l-btn").offset().left, top: $("#l-btn").offset().top});
+                $("body").append($ball);
+                $ball.animate({ left: $t.offset().left, top: $t.offset().top }, 800, function() {
+                    $(this).remove();
+                    let v = $t.data('v') * m;
+                    $t.data('v', v);
+                    if(++count === 2) {
+                        setTimeout(() => {
+                            const pPos = $("#p-wrap").position();
+                            addBlk($("#target-0").data('v'), 'x', pPos.left + 50, 'L');
+                            addBlk($("#target-1").data('v'), 'n', pPos.left + 150, 'L');
+                            $("#p-wrap").remove(); lock = false; refreshAll(); checkWin();
+                        }, 500);
+                    }
+                });
+            });
         }
 
         function checkWin() {
             if(lock) return;
-            let blks = $(".block:visible").not("[id*='target']");
+            let blks = $(".block:visible:not([id*='target'])");
             let xB = blks.filter(function(){ return $(this).data('t')==='x' });
             let nB = blks.filter(function(){ return $(this).data('t')==='n' });
             if(xB.length === 1 && nB.length === 1 && xB.data('s') !== nB.data('s')) {
                 let c = xB.data('v'), n = nB.data('v');
-                if(c !== 1) xB.html(`<span class="clickable-coeff" onclick="driftDown(${c},${n})">${c}</span>x`);
+                if(c !== 1) xB.html(`<span class="clickable-coeff" style="border:2px solid #fff; padding:2px; border-radius:5px;" onclick="driftDown(${c},${n})">${c}</span>x`);
                 else renderFinalResult(n, 1);
             }
         }
@@ -223,12 +238,10 @@
         function driftDown(c, n) {
             if(lock) return; lock = true;
             const $nb = $(".n-block");
-            const startPos = $(".clickable-coeff").offset();
-            const targetPos = $nb.offset();
-            let $f = $(`<div class="flying-item">${c}</div>`).css({left: startPos.left, top: startPos.top});
+            let $f = $(`<div class="flying-item">${c}</div>`).css({left: $(".clickable-coeff").offset().left, top: $(".clickable-coeff").offset().top});
             $("body").append($f);
             $(".x-block").text("x");
-            $f.animate({ left: targetPos.left + 15, top: targetPos.top + 70 }, 1000, "easeInOutQuart", function(){
+            $f.animate({ left: $nb.offset().left + 10, top: $nb.offset().top + 50 }, 1000, function(){
                 $(this).remove();
                 $nb.html(`<div class="frac-v"><span>${n}</span><div class="frac-v-line"></div><span style="color:#ffed00">${c}</span></div>`);
                 renderFinalResult(n, c);
@@ -242,7 +255,6 @@
             n /= common; c /= common;
             let html = (c === 1) ? `x = ${n}` : `x = <div class="frac-v"><span>${n}</span><div class="frac-v-line"></div><span>${c}</span></div>`;
             $("#final-ans-box").html(html).fadeIn(600);
-            $("#msg").text("🎉 解題完成！");
         }
 
         function resetLevel() { loadLevel(curIdx); }
