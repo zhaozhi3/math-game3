@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>代數全平衡 28.6 觸控修復版 🍬</title>
+    <title>代數全平衡 28.7 🍬</title>
     <style>
         :root { --pink: #ff5c8d; --blue: #4f46e5; --orange: #f59e0b; --purple: #9333ea; }
         * { touch-action: none; box-sizing: border-box; -webkit-user-select: none; }
@@ -30,7 +30,7 @@
         #zero-L { left: 15%; } #zero-R { right: 15%; }
         .zero-bg.active { opacity: 1; }
 
-        .block { position: absolute; width: 80px; height: 80px; border-radius: 18px; color: white; font-weight: bold; font-size: 22px; cursor: grab; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0px rgba(0,0,0,0.1); z-index: 100; }
+        .block { position: absolute; width: 80px; height: 80px; border-radius: 18px; color: white; font-weight: bold; font-size: 22px; cursor: grab; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0px rgba(0,0,0,0.1); z-index: 100; transition: background 0.2s; }
         .x-block { background: var(--blue); }
         .n-block { background: var(--orange); }
 
@@ -41,13 +41,7 @@
 
         #final-ans-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; font-size: 40px; font-weight: bold; color: var(--pink); background: rgba(255, 255, 255, 0.98); padding: 10px 45px; border-radius: 15px; border: 5px solid var(--pink); z-index: 1500; }
 
-        /* 修復後的點擊區域 */
-        .clickable-coeff { 
-            display: inline-block; background: var(--pink) !important; color: white !important; 
-            padding: 8px 18px; border-radius: 10px; cursor: pointer; border: 2px solid white; 
-            box-shadow: 0 4px 10px rgba(255,92,141,0.5); font-weight: 900;
-            pointer-events: auto !important; /* 強制接收事件 */
-        }
+        .clickable-coeff { display: inline-block; background: var(--pink) !important; color: white !important; padding: 8px 18px; border-radius: 10px; cursor: pointer; border: 2px solid white; box-shadow: 0 4px 10px rgba(255,92,141,0.5); font-weight: 900; pointer-events: auto !important; }
 
         .flying-item { position: fixed; width: 50px; height: 50px; background: white; border: 3px solid var(--blue); border-radius: 50%; color: var(--blue); font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 3000; font-size: 22px; pointer-events: none; }
         .frac-v { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; }
@@ -114,7 +108,8 @@
                 </div>`).css({ left: sw * 0.08, top: sh * 0.35 });
                 $("#stage").append($p);
                 lvl.inner.forEach((o, i) => {
-                    let $ib = $(`<div class="block ${o.ty}-block inner-block" id="target-${i}">${o.v==1?'x':'+'+o.v}</div>`);
+                    let text = o.v === 1 ? 'x' : (o.v > 0 ? '+'+o.v : o.v);
+                    let $ib = $(`<div class="block ${o.ty}-block inner-block" id="target-${i}">${text}</div>`);
                     $ib.data({v: o.v, t: o.ty, s: 'L'}).insertBefore($p.find(".p-char").last());
                 });
                 addBlk(lvl.target.v, lvl.target.ty, sw * lvl.target.x, sh * lvl.target.y, 'R');
@@ -129,7 +124,6 @@
             $("#stage").append($d);
             $d.draggable({
                 containment: "#stage",
-                start: function() { $(this).css('z-index', 500); },
                 drag: function() {
                     let mid = $("#stage").width() / 2;
                     let side = ($(this).offset().left + 40) < ($("#stage").offset().left + mid) ? 'L' : 'R';
@@ -139,7 +133,6 @@
                     }
                 },
                 stop: function() { 
-                    $(this).css('z-index', 100);
                     checkMerge($(this)); 
                     refresh(); 
                     setTimeout(checkWin, 200); 
@@ -148,15 +141,30 @@
         }
 
         function refresh() {
-            ['L', 'R'].forEach(s => {
-                let bs = $(".block:visible").not("[id*='target']").filter(function(){ return $(this).data('s') === s });
-                bs.each(function(i){
+            ['L', 'R'].forEach(side => {
+                // 找出該側所有方塊，並按水平座標排序
+                let bs = $(".block:visible").not("[id*='target']").filter(function(){ 
+                    return $(this).data('s') === side 
+                }).sort((a, b) => $(a).position().left - $(b).position().left);
+
+                bs.each(function(index){
                     let v = $(this).data('v'), t = $(this).data('t');
-                    let p = (v > 0 && i > 0) ? "+" : "";
-                    $(this).text(p + (t==='x' ? (v===1?"x":v===-1?"-x":v+"x") : v));
+                    let text = "";
+                    
+                    // 符號判斷邏輯
+                    if (v > 0) {
+                        // 如果不是第一個方塊，才加 "+"
+                        text = (index === 0) ? "" : "+";
+                        text += (t === 'x' ? (v === 1 ? "x" : v + "x") : v);
+                    } else {
+                        // 負數一律顯示 "-"
+                        text = (t === 'x' ? (v === -1 ? "-x" : v + "x") : v);
+                    }
+                    $(this).text(text);
                 });
-                let isParenExist = (s === 'L' && $(".paren-container").length > 0);
-                $(`#zero-${s}`).toggleClass("active", (bs.length === 0 && !isParenExist));
+
+                let isParenExist = (side === 'L' && $(".paren-container").length > 0);
+                $(`#zero-${side}`).toggleClass("active", (bs.length === 0 && !isParenExist));
             });
         }
 
@@ -208,7 +216,6 @@
             if(xB.length === 1 && nB.length === 1 && xB.data('s') !== nB.data('s')) {
                 let c = xB.data('v'), n = nB.data('v');
                 if(c !== 1) {
-                    // 使用 PointerDown 確保行動裝置反應
                     let btn = $(`<span class="clickable-coeff">${c}</span>`);
                     btn.on('pointerdown', (e) => { e.stopPropagation(); driftDown(c, n); });
                     xB.empty().append(btn).append("x");
